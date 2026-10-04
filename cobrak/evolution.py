@@ -112,6 +112,7 @@ class COBRAKProblem:
         pop_size: int | None = None,
         ignore_nonlinear_extra_terms_in_ectfbas: bool = True,
         num_used_cpu_cores: float = -1,
+        #num_sampling_batches = None
     ) -> None:
         """Initializes a COBRAKProblem object.
 
@@ -141,7 +142,14 @@ class COBRAKProblem:
             ignore_nonlinear_extra_terms_in_ectfbas: (bool, optional): Whether or not non-linear watches/constraints shall be ignored in ecTFBAs. Defaults to True.
             num_cpus_used (float): Maximal number of used CPU cores. If set to -1, all
                             CPU cores of your computer may be used. Default is -1.
+            sampling_num_batches(int): if provided, is used instead of cpu_count for initial sampling
         """
+        #not used here
+        #final_num_sampling_batches = (
+        #    cpu_count() if num_sampling_batches is None else num_sampling_batches
+        #)
+        #self.final_num_sampling_batches = final_num_sampling_batches
+        
         self.original_cobrak_model: Model = deepcopy(cobrak_model)
         self.objective_target = objective_target
         self.objective_sense = objective_sense
@@ -801,6 +809,7 @@ def postprocess(
     onlytested: str = "",
     ignore_nonlinear_extra_terms_in_ectfbas: bool = True,
     num_used_cpu_cores: float = -1,
+    num_sampling_batches: int | None = None
 ) -> tuple[float, list[float | int]]:
     """Postprocesses the optimization results to find feasible switches.
 
@@ -825,10 +834,17 @@ def postprocess(
         ignore_nonlinear_extra_terms_in_ectfbas: (bool, optional): Whether or not non-linear watches/constraints shall be ignored in ecTFBAs.
         num_used_cpu_cores (float): Maximal number of used CPU cores. If set to -1, all
             CPU cores of your computer may be used. Default is -1.
+        num_sampling_batches (int): Number of initial samples, used instead of cpu_count. Defaults to None.
 
     Returns:
         tuple[float, list[float | int]]: Best result and a list of feasible switches.
     """
+    
+    final_num_sampling_batches = (
+            cpu_count() if num_sampling_batches is None else num_sampling_batches
+        )
+    
+    
     if variability_data == {}:
         variability_data = perform_lp_variability_analysis(
             cobrak_model=cobrak_model,
@@ -907,7 +923,7 @@ def postprocess(
             onlytested,
             ignore_nonlinear_extra_terms_in_ectfbas,
         )
-        for targets_batch in split_list(targets, cpu_count())
+        for targets_batch in split_list(targets, final_num_sampling_batches)
     )
     all_feasible_switches = []
     for sublist in all_feasible_switches_metalist:
@@ -1064,6 +1080,7 @@ def perform_nlp_evolutionary_optimization(
     working_results: list[dict[str, float]] = [],
     ignore_nonlinear_extra_terms_in_ectfbas: bool = True,
     num_used_cpu_cores: float = -1,
+    num_sampling_batches = None
 ) -> dict[float, list[dict[str, float]]]:
     """Performs NLP evolutionary optimization on the given COBRA-k model.
 
@@ -1096,10 +1113,17 @@ def perform_nlp_evolutionary_optimization(
         working_results (list[dict[str, float]], optional): List of initial feasible results. Defaults to [].
         ignore_nonlinear_extra_terms_in_ectfbas: (bool, optional): Whether or not non-linear watches/constraints shall be ignored in ecTFBAs. Defaults to True.
         num_used_cpu_cores (float): Maximal number of used CPU cores. If set to -1, all CPU cores of your computer may be used. Default is -1.
+        num_sampling_batches (int): Number of initial samples, used instead of cpu_count
 
     Returns:
         dict[float, list[dict[str, float]]]: Dictionary of objective values and corresponding solutions.
     """
+    
+    final_num_sampling_batches = (
+            cpu_count() if num_sampling_batches is None else num_sampling_batches
+        )
+
+    
     if variability_dict == {}:
         variability_dict = perform_lp_variability_analysis(
             cobrak_model=cobrak_model,
@@ -1138,7 +1162,8 @@ def perform_nlp_evolutionary_optimization(
                 + sampling_always_deactivated_reactions
                 for _ in range(sampling_rounds_per_metaround)
             ]
-            for _ in range(cpu_count())
+            #for _ in range(cpu_count())
+            for _ in range(final_num_sampling_batches)
         ]
         if current_round == 0:
             all_deactivated_reaction_lists[0][0] = deepcopy(
@@ -1229,6 +1254,7 @@ def perform_nlp_evolutionary_optimization(
         nlp_strict_mode=nlp_strict_mode,
         nlp_single_strict_reacs=nlp_single_strict_reacs,
         num_used_cpu_cores=num_used_cpu_cores,
+        num_sampling_batches=num_sampling_batches
     )
 
     return problem.optimize()

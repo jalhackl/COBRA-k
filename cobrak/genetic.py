@@ -49,7 +49,7 @@ class COBRAKGENETIC:
         Args:
             fitness_function (Callable): The fitness function to evaluate solutions.
             xs_dim (int): The dimensionality of the search space.
-            gen (int): The number of generations to run.
+            gen (int): The number of generations to run the algorithm.
             extra_xs (list[list[int]], optional): Extra particles to initialize the population.
                 Defaults to [].
             seed (int | None, optional): Seed for the random number generator. Defaults to None.
@@ -144,7 +144,11 @@ class COBRAKGENETIC:
             # Choose some of the 25% best
             for _ in range(self.cpu_count // 2):
                 chosen_xs.append(
-                    choice([x[1] for x in xs_list][: round(len(xs_list) * 0.25)])
+                    choice(
+                        [x[1] for x in xs_list][
+                            : max(1, round(len(xs_list) * 0.25))
+                        ]
+                    )
                 )
 
             # Choose some other 75% worst
