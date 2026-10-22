@@ -1253,8 +1253,8 @@ def perform_nlp_evolutionary_optimization(
         ignore_nonlinear_extra_terms_in_ectfbas=ignore_nonlinear_extra_terms_in_ectfbas,
         nlp_strict_mode=nlp_strict_mode,
         nlp_single_strict_reacs=nlp_single_strict_reacs,
-        num_used_cpu_cores=num_used_cpu_cores,
-        num_sampling_batches=num_sampling_batches
+        num_used_cpu_cores=num_used_cpu_cores
+        #num_sampling_batches=num_sampling_batches
     )
 
     return problem.optimize()
